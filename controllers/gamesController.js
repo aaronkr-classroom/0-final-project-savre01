@@ -1,40 +1,32 @@
-// controllers/subscribersController.js
+// controllers/usersController.js
 "use strict";
 
 /**
- * Listing 16.4 (p. 230-231)
- * 구독자를 위한 컨트롤러 액션 정의
+ * Listing 18.9 (p. 268-269)
+ * Listing 18.11 (p. 271)
+ * userController.js에서 인덱스 액션 생성과 index 액션의 재방문
  */
-// 구독자 모델 요청
-const Subscriber = require("../models/Subscriber");
+const Game = require("../models/Game"); // 사용자 모델 요청
 
 module.exports = {
   index: (req, res, next) => {
-    Subscriber.find() // index 액션에서만 퀴리 실행
-      .then((subscribers) => {
+    Game.find() // index 액션에서만 퀴리 실행
+      .then((games) => {
         // 사용자 배열로 index 페이지 렌더링
-        res.locals.subscribers = subscribers; // 응답상에서 사용자 데이터를 저장하고 다음 미들웨어 함수 호출
+        res.locals.games = games; // 응답상에서 사용자 데이터를 저장하고 다음 미들웨어 함수 호출
         next();
       })
       .catch((error) => {
         // 로그 메시지를 출력하고 홈페이지로 리디렉션
-        console.log(`Error fetching subscribers: ${error.message}`);
+        console.log(`Error fetching games: ${error.message}`);
         next(error); // 에러를 캐치하고 다음 미들웨어로 전달
       });
   },
   indexView: (req, res) => {
-    /*
-     * Listing 26.3 (p. 384)
-     * @TODO: userController.js에서 쿼리 매개변수가 존재할 때 JSON으로 응답하기
-     */
-    if (req.query.format === "json") {
-      res.json(res.locals.users);
-    } else {
-      res.render("subscribers/index", {
-        page: "subscribers",
-        title: "All Subscribers",
-      }); // 분리된 액션으로 뷰 렌더링
-    }
+    res.render("games/index", {
+      page: "games",
+      title: "All Games",
+    }); // 분리된 액션으로 뷰 렌더링
   },
 
   /**
@@ -49,29 +41,33 @@ module.exports = {
    */
   // 폼의 렌더링을 위한 새로운 액션 추가
   new: (req, res) => {
-    res.render("subscribers/new", {
-      page: "new-subscriber",
-      title: "New Subscriber",
+    res.render("games/new", {
+      page: "new-game",
+      title: "New Game",
     });
   },
 
   // 사용자를 데이터베이스에 저장하기 위한 create 액션 추가
   create: (req, res, next) => {
-    let subscriberParams = {
-      name: req.body.name,
+    let gameParams = {
+      name: {
+        first: req.body.first,
+        last: req.body.last,
+      },
       email: req.body.email,
-      phoneNumber: req.body.phoneNumber,
-      newsletter: req.body.newsletter,
+      gamename: req.body.gamename,
+      password: req.body.password,
+      profileImg: req.body.profileImg,
     };
     // 폼 파라미터로 사용자 생성
-    Subscriber.create(subscriberParams)
-      .then((subscriber) => {
-        res.locals.redirect = "/subscribers";
-        res.locals.subscriber = subscriber;
+    Game.create(gameParams)
+      .then((game) => {
+        res.locals.redirect = "/games";
+        res.locals.game = game;
         next();
       })
       .catch((error) => {
-        console.log(`Error saving subscriber: ${error.message}`);
+        console.log(`Error saving game: ${error.message}`);
         next(error);
       });
   },
@@ -94,23 +90,23 @@ module.exports = {
    * userController.js에서 특정 사용자에 대한 show 액션 추가
    */
   show: (req, res, next) => {
-    let subscriberId = req.params.id; // request params로부터 사용자 ID 수집
-    Subscriber.findById(subscriberId) // ID로 사용자 찾기
-      .then((subscriber) => {
-        res.locals.subscriber = subscriber; // 응답 객체를 통해 다음 믿들웨어 함수로 사용자 전달
+    let gameId = req.params.id; // request params로부터 사용자 ID 수집
+    Game.findById(gameId) // ID로 사용자 찾기
+      .then((game) => {
+        res.locals.game = game; // 응답 객체를 통해 다음 믿들웨어 함수로 사용자 전달
         next();
       })
       .catch((error) => {
-        console.log(`Error fetching subscriber by ID: ${error.message}`);
+        console.log(`Error fetching game by ID: ${error.message}`);
         next(error); // 에러를 로깅하고 다음 함수로 전달
       });
   },
 
   // show 뷰의 렌더링
   showView: (req, res) => {
-    res.render("subscribers/show", {
-      page: "subscriber-details",
-      title: "Subscriber Details",
+    res.render("games/show", {
+      page: "game-details",
+      title: "Game Details",
     });
   },
 
@@ -120,41 +116,45 @@ module.exports = {
    */
   // edit 액션 추가
   edit: (req, res, next) => {
-    let subscriberId = req.params.id;
-    Subscriber.findById(subscriberId) // ID로 데이터베이스에서 사용자를 찾기 위한 findById 사용
-      .then((subscriber) => {
-        res.render("subscribers/edit", {
-          subscriber: subscriber,
-          page: subscriber.name,
-          title: "Edit Subscriber",
+    let gameId = req.params.id;
+    Game.findById(gameId) // ID로 데이터베이스에서 사용자를 찾기 위한 findById 사용
+      .then((game) => {
+        res.render("games/edit", {
+          game: game,
+          page: "edit-game",
+          title: "Edit Game",
         }); // 데이터베이스에서 내 특정 사용자를 위한 편집 페이지 렌더링
       })
       .catch((error) => {
-        console.log(`Error fetching subscriber by ID: ${error.message}`);
+        console.log(`Error fetching game by ID: ${error.message}`);
         next(error);
       });
   },
 
   // update 액션 추가
   update: (req, res, next) => {
-    let subscriberId = req.params.id,
-      subscriberParams = {
-        name: req.body.name,
+    let gameId = req.params.id,
+      gameParams = {
+        name: {
+          first: req.body.first,
+          last: req.body.last,
+        },
         email: req.body.email,
-        phoneNumber: req.body.phoneNumber,
-        newsletter: req.body.newsletter,
+        gamename: req.body.gamename,
+        password: req.body.password,
+        profileImg: req.body.profileImg,
       }; // 요청으로부터 사용자 파라미터 취득
 
-    User.findByIdAndUpdate(subscriberId, {
-      $set: subscriberParams,
+    Game.findByIdAndUpdate(gameId, {
+      $set: gameParams,
     }) //ID로 사용자를 찾아 단일 명령으로 레코드를 수정하기 위한 findByIdAndUpdate의 사용
-      .then((user) => {
-        res.locals.redirect = `/subscribers/${subscriberId}`;
-        res.locals.subscriber = subscriber;
+      .then((game) => {
+        res.locals.redirect = `/games/${gameId}`;
+        res.locals.game = game;
         next(); // 지역 변수로서 응답하기 위해 사용자를 추가하고 다음 미들웨어 함수 호출
       })
       .catch((error) => {
-        console.log(`Error updating subscriber by ID: ${error.message}`);
+        console.log(`Error updating game by ID: ${error.message}`);
         next(error);
       });
   },
@@ -164,14 +164,14 @@ module.exports = {
    * delete 액션의 추가
    */
   delete: (req, res, next) => {
-    let subscriberId = req.params.id;
-    Subscriber.findByIdAndRemove(subscriberId) // findByIdAndRemove 메소드를 이용한 사용자 삭제
+    let gameId = req.params.id;
+    Game.findByIdAndRemove(gameId) // findByIdAndRemove 메소드를 이용한 사용자 삭제
       .then(() => {
-        res.locals.redirect = "/subscribers";
+        res.locals.redirect = "/games";
         next();
       })
       .catch((error) => {
-        console.log(`Error deleting subscriber by ID: ${error.message}`);
+        console.log(`Error deleting game by ID: ${error.message}`);
         next();
       });
   },

@@ -18,10 +18,10 @@ module.exports = {
       title: "About",
     });
   },
-  showTransportation: (req, res) => {
-    res.render("_pages/transportation", {
-      page: "transportation",
-      title: "Transportation",
+  chat: (req, res) => {
+    res.render("chat", {
+      page: "chat",
+      title: "Chat",
     });
   },
 };
